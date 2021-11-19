@@ -17,6 +17,10 @@ import com.example.rosbridgesample.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
+
+//import edu.wpi.rail.jrosbridge.Ros;
+//import edu.wpi.rail.jrosbridge.Topic;
+//import edu.wpi.rail.jrosbridge.messages.Message;
 import ros.Publisher;
 import ros.RosBridge;
 import ros.msgs.std_msgs.PrimitiveMsg;
@@ -39,19 +43,23 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        RosBridge bridge = new RosBridge();
-        bridge.connect("ws://192.168.100.220:9090", true);
-//        Publisher pub = new Publisher("/chatter", "std_msgs/String", bridge);
-//        PrimitiveMsg<String> msg = new PrimitiveMsg<>("hello from android");
-
-        binding.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-//                pub.publish(msg);
+        Thread rosbridgeThread = new Thread(() -> {
+            RosBridge bridge = new RosBridge();
+            bridge.connect("ws://192.168.100.220:9090");
+            Publisher pub = new Publisher("/chatter", "std_msgs/String", bridge);
+            for(int i = 0; i < 100; i++) {
+                pub.publish(new PrimitiveMsg<>("hello from android " + i));
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
+        rosbridgeThread.start();
+
+        binding.fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show());
     }
 
     @Override
